@@ -59,6 +59,21 @@ CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:ens32
 
 packstack --answer-file=/root/answer-file.txt
 
+[root@localhost ~]#
+Applying Puppet manifests                            [ DONE ]
+Finalizing                                           [ DONE ]
+
+ **** Installation completed successfully ******
+
+Additional information:
+ * File /root/keystonerc_admin has been created on OpenStack client host 10.0.212.126. To use the command line tools you need to source the file.
+ * To access the OpenStack Dashboard browse to http://10.0.212.126/dashboard .
+Please, find your login credentials stored in the keystonerc_admin in your home directory.
+ * Because of the kernel update the host 10.0..212.126 requires reboot.
+ * The installation log file is available at: /var/tmp/packstack/20170809-185805-XCaXPB/openstack-setup.log
+ * The generated manifests are available at: /var/tmp/packstack/20170809-185805-XCaXPB/manifests
+[root@localhost ~]#
+
 
 ### Downalod and Create Image ###
 wget  http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
@@ -66,6 +81,7 @@ openstack image create "cirros" --file cirros-0.3.4-x86_64-disk.img --disk-forma
 
 
 #### Configure Network External ###
+cd ~
 . keystonerc_admin
 openstack network create --share --external \
 --provider-network-type flat --provider-physical-network extnet External_network
@@ -74,3 +90,4 @@ openstack subnet create Public_subnet --network External_network \
 --subnet-range 10.0.212.0/24 --no-dhcp \
 --allocation-pool=start=10.0.212.101,end=10.0.212.105 \
 --gateway=10.0.212.1 --dns-nameserver 8.8.8.8 
+
