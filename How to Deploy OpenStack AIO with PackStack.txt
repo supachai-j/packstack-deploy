@@ -1,7 +1,7 @@
 
 ### How to Deploy OpenStack AIO with PackStack ##
 
-hostnamectl set-hostname cloud-ops101.idc.cattelecom.com
+hostnamectl set-hostname cloud-ops101.example.local
 
 sudo yum remove postfix -y
 
