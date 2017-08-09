@@ -1,0 +1,76 @@
+
+### How to Deploy OpenStack AIO with PackStack ##
+
+hostnamectl set-hostname cloud-ops101.idc.cattelecom.com
+
+sudo yum remove postfix -y
+
+sudo systemctl disable firewalld
+sudo systemctl stop firewalld
+sudo systemctl disable NetworkManager
+sudo systemctl stop NetworkManager
+sudo systemctl enable network
+sudo systemctl start network
+
+
+## Disable SELinux ##
+setenforce 0 ; sed -i 's/=enforcing/=disabled/g' /etc/selinux/config
+
+
+### Add Volume Group for Cinder ###
+echo -e "n\np\n1\n\n\n\t\n8e\nw\n" | fdisk /dev/sdb > /dev/null
+pvcreate /dev/sdb1
+vgcreate cinder-volumes /dev/sdb1
+
+### Install EPEL Repo ###
+yum install wget -y
+wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+wget http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
+
+
+## yum install PackStack ##
+sudo yum install -y centos-release-openstack-ocata
+sudo yum update -y
+sudo yum install -y openstack-packstack
+
+
+## Generate answerfile ##
+packstack --gen-answer-file=/root/answer-file.txt
+
+## Edit answer-file ##
+vi /root/answer-file.txt
+
+CONFIG_CONTROLLER_HOST=10.0.0.230
+CONFIG_COMPUTE_HOSTS=10.0.0.230,10.0.0.231
+CONFIG_NETWORK_HOSTS=10.0.0.230
+CONFIG_PROVISION_DEMO=n
+CONFIG_CEILOMETER_INSTALL=n
+CONFIG_NTP_SERVERS=ntp1.cat.net.th
+CONFIG_KEYSTONE_ADMIN_PW=cloud@cat
+
+
+CONFIG_CINDER_VOLUMES_CREATE=n
+
+CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=extnet:br-ex
+CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:ens32
+
+### Runing answerfile Implementation OpenStack ###
+
+packstack --answer-file=/root/answer-file.txt
+
+
+### Downalod and Create Image ###
+wget  http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+openstack image create "cirros" --file cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --public
+
+
+#### Configure Network External ###
+. keystonerc_admin
+openstack network create --share --external \
+--provider-network-type flat --provider-physical-network extnet External_network
+
+openstack subnet create Public_subnet --network External_network \
+--subnet-range 10.0.212.0/24 --no-dhcp \
+--allocation-pool=start=10.0.212.101,end=10.0.212.105 \
+--gateway=10.0.212.1 --dns-nameserver 8.8.8.8 
