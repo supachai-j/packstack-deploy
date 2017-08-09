@@ -74,6 +74,13 @@ Please, find your login credentials stored in the keystonerc_admin in your home 
  * The generated manifests are available at: /var/tmp/packstack/20170809-185805-XCaXPB/manifests
 [root@localhost ~]#
 
+### Install Addition Packages  ###
+yum install wget -y
+wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm
+rpm -ihv epel-release-7-10.noarch.rpm 
+
+yum install htop iftop iotop
+
 
 ### Downalod and Create Image ###
 wget  http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
