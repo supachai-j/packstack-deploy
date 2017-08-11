@@ -22,13 +22,6 @@ echo -e "n\np\n1\n\n\n\nt\n8e\nw\n" | fdisk /dev/sdb > /dev/null
 pvcreate /dev/sdb1
 vgcreate cinder-volumes /dev/sdb1
 
-### Install EPEL Repo ###
-yum install wget -y
-wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-wget http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
-
-
 ## yum install PackStack ##
 sudo yum install -y centos-release-openstack-ocata
 sudo yum update -y
