@@ -1,8 +1,10 @@
 
-### How to Deploy OpenStack AIO with PackStack ##
+#### How to Deploy OpenStack AIO with PackStack ####
 
-hostnamectl set-hostname cloud-ops101.example.local
+## Hostname configure ##
+hostnamectl set-hostname cloud-ops101.example.local --static
 
+## Remove and Disable Services ##
 sudo yum remove postfix -y
 
 sudo systemctl disable firewalld
@@ -13,8 +15,58 @@ sudo systemctl enable network
 sudo systemctl start network
 
 
-## Disable SELinux ##
+#### Disable SELinux ####
 setenforce 0 ; sed -i 's/=enforcing/=disabled/g' /etc/selinux/config
+
+#### Check Network Interface and IP Address ####
+[root@cloud-ops101 ~]# ip address
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: ens33: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:1a:15:7d brd ff:ff:ff:ff:ff:ff
+    inet 172.25.1.154/24 brd 172.25.1.255 scope global dynamic ens33
+       valid_lft 350sec preferred_lft 350sec
+    inet6 fe80::20c:29ff:fe1a:157d/64 scope link
+       valid_lft forever preferred_lft forever
+[root@cloud-ops101 ~]#
+
+
+#### Pre-Check HDD on VM ####
+[root@cloud-ops101 ~]# fdisk -l
+
+Disk /dev/sda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000bd2db
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *        2048     2099199     1048576   83  Linux
+/dev/sda2         2099200    83886079    40893440   8e  Linux LVM
+
+Disk /dev/sdb: 64.4 GB, 64424509440 bytes, 125829120 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+
+Disk /dev/mapper/cl-root: 37.6 GB, 37576769536 bytes, 73392128 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+
+Disk /dev/mapper/cl-swap: 4294 MB, 4294967296 bytes, 8388608 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+[root@cloud-ops101 ~]#
 
 
 ### Add Volume Group for Cinder ###
@@ -22,37 +74,88 @@ echo -e "n\np\n1\n\n\n\nt\n8e\nw\n" | fdisk /dev/sdb > /dev/null
 pvcreate /dev/sdb1
 vgcreate cinder-volumes /dev/sdb1
 
-## yum install PackStack ##
+[root@cloud-ops101 ~]# echo -e "n\np\n1\n\n\n\nt\n8e\nw\n" | fdisk /dev/sdb > /dev/null
+Device does not contain a recognized partition table
+Building a new DOS disklabel with disk identifier 0xc4aeb149.
+[root@cloud-ops101 ~]# pvcreate /dev/sdb1
+  Physical volume "/dev/sdb1" successfully created.
+[root@cloud-ops101 ~]# vgcreate cinder-volumes /dev/sdb1
+  Volume group "cinder-volumes" successfully created
+[root@cloud-ops101 ~]#
+
+
+[root@cloud-ops101 ~]# fdisk -l
+
+Disk /dev/sda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000bd2db
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *        2048     2099199     1048576   83  Linux
+/dev/sda2         2099200    83886079    40893440   8e  Linux LVM
+
+Disk /dev/sdb: 64.4 GB, 64424509440 bytes, 125829120 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0xc4aeb149
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdb1            2048   125829119    62913536   8e  Linux LVM
+
+Disk /dev/mapper/cl-root: 37.6 GB, 37576769536 bytes, 73392128 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+
+Disk /dev/mapper/cl-swap: 4294 MB, 4294967296 bytes, 8388608 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+[root@cloud-ops101 ~]#
+
+
+#### yum install PackStack ####
 sudo yum install -y centos-release-openstack-ocata
 sudo yum update -y
 sudo yum install -y openstack-packstack
 
 
-## Generate answerfile ##
+#### Generate answerfile ####
 packstack --gen-answer-file=/root/answer-file.txt
 
-## Edit answer-file ##
+#### Edit answer-file ####
 vi /root/answer-file.txt
 
 CONFIG_CONTROLLER_HOST=10.0.0.230
 CONFIG_COMPUTE_HOSTS=10.0.0.230,10.0.0.231
 CONFIG_NETWORK_HOSTS=10.0.0.230
+
 CONFIG_PROVISION_DEMO=n
+
 CONFIG_CEILOMETER_INSTALL=n
+
 CONFIG_NTP_SERVERS=ntp1.cat.net.th
-CONFIG_KEYSTONE_ADMIN_PW=cloud@cat
+CONFIG_KEYSTONE_ADMIN_PW=cloud@local
 
 
 CONFIG_CINDER_VOLUMES_CREATE=n
 
 CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=extnet:br-ex
-CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:ens32
+CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:ens33
 
-### Runing answerfile Implementation OpenStack ###
 
-packstack --answer-file=/root/answer-file.txt
+##### Runing answerfile Implementation OpenStack #####
 
-[root@localhost ~]#
+[root@localhost ~]#packstack --answer-file=/root/answer-file.txt
+
+.....................hidden output.................................
 Applying Puppet manifests                            [ DONE ]
 Finalizing                                           [ DONE ]
 
