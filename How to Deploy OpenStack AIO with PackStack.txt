@@ -133,9 +133,9 @@ packstack --gen-answer-file=/root/answer-file.txt
 #### Edit answer-file ####
 vi /root/answer-file.txt
 
-CONFIG_CONTROLLER_HOST=10.0.0.230
-CONFIG_COMPUTE_HOSTS=10.0.0.230,10.0.0.231
-CONFIG_NETWORK_HOSTS=10.0.0.230
+CONFIG_CONTROLLER_HOST=172.25.1.154
+CONFIG_COMPUTE_HOSTS=172.25.1.154
+CONFIG_NETWORK_HOSTS=172.25.1.154
 
 CONFIG_PROVISION_DEMO=n
 
@@ -162,10 +162,10 @@ Finalizing                                           [ DONE ]
  **** Installation completed successfully ******
 
 Additional information:
- * File /root/keystonerc_admin has been created on OpenStack client host 10.0.212.126. To use the command line tools you need to source the file.
- * To access the OpenStack Dashboard browse to http://10.0.212.126/dashboard .
+ * File /root/keystonerc_admin has been created on OpenStack client host 172.25.1.154. To use the command line tools you need to source the file.
+ * To access the OpenStack Dashboard browse to http://172.25.1.154/dashboard .
 Please, find your login credentials stored in the keystonerc_admin in your home directory.
- * Because of the kernel update the host 10.0..212.126 requires reboot.
+ * Because of the kernel update the host 172.25.1.154 requires reboot.
  * The installation log file is available at: /var/tmp/packstack/20170809-185805-XCaXPB/openstack-setup.log
  * The generated manifests are available at: /var/tmp/packstack/20170809-185805-XCaXPB/manifests
 [root@localhost ~]#
@@ -177,20 +177,19 @@ rpm -ihv epel-release-7-10.noarch.rpm
 
 yum install htop iftop iotop
 
-
-### Downalod and Create Image ###
-wget  http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-openstack image create "cirros" --file cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --public
-
-
-#### Configure Network External ###
+###### Configure Network External #####
 cd ~
 . keystonerc_admin
 openstack network create --share --external \
 --provider-network-type flat --provider-physical-network extnet External_network
 
 openstack subnet create Public_subnet --network External_network \
---subnet-range 10.0.212.0/24 --no-dhcp \
---allocation-pool=start=10.0.212.101,end=10.0.212.105 \
---gateway=10.0.212.1 --dns-nameserver 8.8.8.8 
+--subnet-range 172.25.1.0/24 --no-dhcp \
+--allocation-pool=start=172.25.1.101,end=10.0.212.150 \
+--gateway=172.25.1.2 --dns-nameserver 8.8.8.8 
+
+
+### Downalod and Create Image ###
+wget  http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+openstack image create "cirros" --file cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --public
 
